@@ -1,0 +1,47 @@
+use .base
+use .parse
+
+fuelForModule : Nat -> Nat
+fuelForModule m = Int.truncate0 ((m / 3) - 2)
+
+test> fuelForModule.ex1 = check let
+  fuelForModule 12 == 2
+test> fuelForModule.ex2 = check let
+  fuelForModule 14 == 2
+test> fuelForModule.ex3 = check let
+  fuelForModule 1969 == 654
+test> fuelForModule.ex4 = check let
+  fuelForModule 100756 == 33583
+
+transitiveFuelForModule : Nat -> Nat
+transitiveFuelForModule n = let
+  go acc fuel = if fuel <= 0
+    then acc
+    else go (acc + fuel) (fuelForModule fuel)
+  go 0 (fuelForModule n)
+
+test> transitiveFuelForModule.ex1 = check let
+  transitiveFuelForModule 12 == 2
+test> transitiveFuelForModule.ex2 = check let
+  transitiveFuelForModule 1969 == 966
+test> transitiveFuelForModule.ex3 = check let
+  transitiveFuelForModule 100756 == 50346
+
+input : '{Read Char} [Nat]
+input = parse.lines parse.nat
+
+main : '{IO} ()
+main = 'let
+  parsed = !(parse.file input "1.input")
+
+  parsed
+    |> List.map fuelForModule
+    |> List.foldl (+) 0
+    |> Nat.toText
+    |> io.printLine
+
+  parsed
+    |> List.map transitiveFuelForModule
+    |> List.foldl (+) 0
+    |> Nat.toText
+    |> io.printLine

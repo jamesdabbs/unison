@@ -1,0 +1,34 @@
+use .base
+use .external.read.v0
+use .parse
+use .aoc19
+
+run : [Nat] -> Nat -> Nat -> Nat
+run rom noun verb =
+  rom
+    |> List.replace 1 noun
+    |> List.replace 2 verb
+    |> intcode.run
+    |> List.at 0
+    |> Optional.orDefault 0
+
+search : [Nat] -> Nat -> Nat
+search rom target = let
+  inputs = List.pairs (List.range 0 100) (List.range 0 100)
+  inputs
+    |> List.find (input -> (Function.uncurry (run rom) input) == target)
+    |> cases
+         Some (noun, verb) -> 100 * noun + verb
+         _ -> 0
+
+main : '{IO} ()
+main = 'let
+  rom = !(intcode.load "input/2")
+
+  run rom 12 2
+    |> Nat.toText
+    |> io.printLine
+
+  search rom 19690720
+    |> Nat.toText
+    |> io.printLine

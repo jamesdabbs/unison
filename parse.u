@@ -1,0 +1,33 @@
+use .base
+use .external.read.v0
+
+parse.rom : '{Read Char} [Nat]
+parse.rom = '(sepBy parse.nat '(one ?,))
+
+parse.toEither : '{Read Char} a -> Text -> Either Text a
+parse.toEither parser input = match readText parser input with
+  (ReadResult _ out) -> out
+
+parse.nat : '{Read Char} Nat
+parse.nat = 'let
+  text.takeWhileText (c -> (c >= ?0) && (c <= ?9))
+    |> Nat.fromText
+    |> Optional.orDefault 0
+
+test> parse.nat.ex1 = check let
+  parse.toEither parse.nat "0123" == Right 123
+
+parse.lines : '{Read Char} a -> '{Read Char} [a]
+parse.lines parser = '(sepBy parser '(one ?\n))
+
+test> parse.lines.ex1 = check let
+  parsed = parse.toEither (parse.lines parse.nat) "123\n456"
+  parsed == Right [123, 456]
+
+parse.file : '{Read Char} a -> Text -> '{IO} a
+parse.file parser path = 'let
+  file = io.openFile (FilePath.FilePath path) io.Mode.Read
+  contents = io.getText file
+  match readText parser contents with
+    (ReadResult _ (Right value)) -> value
+    (ReadResult _ (Left err)) -> bug err

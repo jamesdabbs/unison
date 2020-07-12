@@ -1,0 +1,22 @@
+use .base
+
+-- namespace .base
+
+List.find : (a -> Boolean) -> [a] -> Optional a
+List.find predicate list = let
+  f acc a = match acc with
+    Some value -> Some value
+    _ -> if predicate a then Some a else None
+  List.foldl f None list
+
+test> List.find.ex1 = check let
+  List.find (a -> a > 2) [1,3,2,4] == Some 3
+test> List.find.ex2 = check let
+  List.find (a -> a > 5) [1,3,2,4] == None
+
+List.pairs : [a] -> [a] -> [(a, a)]
+List.pairs as bs =
+  List.flatMap (a -> List.map (b -> (a, b)) bs) as
+
+test> List.pairs.ex1 = check let
+  List.pairs [1,2] [3,4] == [(1,3),(1,4),(2,3),(2,4)]

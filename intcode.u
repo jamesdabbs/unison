@@ -1,0 +1,43 @@
+use .base
+use .external.read.v0
+use .parse
+
+load : Text -> '{IO} [Nat]
+load = .parse.file parse.rom
+
+add : Nat -> Nat -> Nat -> [Nat] -> [Nat]
+add ai bi oi mem = let
+  a = Optional.orDefault 0 (List.at ai mem)
+  b = Optional.orDefault 0 (List.at bi mem)
+  List.replace oi (a + b) mem
+
+mul : Nat -> Nat -> Nat -> [Nat] -> [Nat]
+mul ai bi oi mem = let
+  a = Optional.orDefault 0 (List.at ai mem)
+  b = Optional.orDefault 0 (List.at bi mem)
+  List.replace oi (a * b) mem
+
+run : [Nat] -> [Nat]
+run rom = let
+  go mem pc =
+    match List.drop pc mem with
+      [1, a, b, o] ++ _ -> go (add a b o mem) (pc + 4)
+      [2, a, b, o] ++ _ -> go (mul a b o mem) (pc + 4)
+      _ -> mem
+  go rom 0
+
+test> run.ex0 = check let
+  rom = [1,9,10,3,2,3,11,0,99,30,40,50]
+  run rom == [3500,9,10,70,2,3,11,0,99,30,40,50]
+test> run.ex1 = check let
+  rom = [1,0,0,0,99]
+  run rom == [2,0,0,0,99]
+test> run.ex2 = check let
+  rom = [2,3,0,3,99]
+  run rom == [2,3,0,6,99]
+test> run.ex3 = check let
+  rom = [2,4,4,5,99,0]
+  run rom == [2,4,4,5,99,9801]
+test> run.ex4 = check let
+  rom = [1,1,1,4,99,5,6,0,99]
+  run rom == [30,1,1,4,2,5,6,0,99]
